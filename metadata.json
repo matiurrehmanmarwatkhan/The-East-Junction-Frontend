@@ -1,0 +1,6 @@
+{
+  "name": "The East Junction",
+  "description": "Premium Luxury Family Restaurant & Cafe in Peshawar, Pakistan. Experience ultra-modern elegance and fine dining.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
