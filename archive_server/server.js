@@ -6,15 +6,14 @@ import dotenv from "dotenv";
 import { GoogleGenAI, Type } from "@google/genai";
 dotenv.config();
 const app = express();
-const PORT = 3e3;
+const PORT = 3001;
 const DB_PATH = path.join(process.cwd(), "server-db.json");
 app.use(express.json());
 function initDB() {
   if (fs.existsSync(DB_PATH)) {
     try {
       return JSON.parse(fs.readFileSync(DB_PATH, "utf-8"));
-    } catch {
-    }
+    } catch {}
   }
   const defaultCategories = [
     { id: "cat_1", name: "Burgers", slug: "burgers", icon: "Beef" },
@@ -25,161 +24,187 @@ function initDB() {
       id: "cat_5",
       name: "Platters",
       slug: "platters",
-      icon: "UtensilsCrossed"
+      icon: "UtensilsCrossed",
     },
     { id: "cat_6", name: "Pasta", slug: "pasta", icon: "Soup" },
     { id: "cat_7", name: "Biryani", slug: "biryani", icon: "Calendar" },
     { id: "cat_8", name: "Drinks", slug: "drinks", icon: "Wine" },
-    { id: "cat_9", name: "Desserts", slug: "desserts", icon: "IceCream" }
+    { id: "cat_9", name: "Desserts", slug: "desserts", icon: "IceCream" },
   ];
   const defaultMenuItems = [
     {
       id: "menu_1",
       name: "Turkish Platter",
-      description: "Premium selection of charcoal-sizzled lamb seekh, beef skewers, shish taouk tenders, and garlic flatbread on a bed of gold saffron-infused rice.",
+      description:
+        "Premium selection of charcoal-sizzled lamb seekh, beef skewers, shish taouk tenders, and garlic flatbread on a bed of gold saffron-infused rice.",
       price: 1850,
       categorySlug: "platters",
-      image: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=800&q=80",
+      image:
+        "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=800&q=80",
       isFeatured: true,
-      tags: ["Chef Special", "Premium", "Sharing Platter"]
+      tags: ["Chef Special", "Premium", "Sharing Platter"],
     },
     {
       id: "menu_2",
       name: "Signature Gourmet Burger",
-      description: "Char-crusted double prime brisket blend patty, caramelized balsamic onion marmalade, melted sharp cheddar, signature gold mayo, nested in toasted artisanal brioche.",
+      description:
+        "Char-crusted double prime brisket blend patty, caramelized balsamic onion marmalade, melted sharp cheddar, signature gold mayo, nested in toasted artisanal brioche.",
       price: 850,
       categorySlug: "burgers",
-      image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=800&q=80",
+      image:
+        "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=800&q=80",
       isFeatured: true,
-      tags: ["Best Seller", "Juicy"]
+      tags: ["Best Seller", "Juicy"],
     },
     {
       id: "menu_3",
       name: "Tarragon Grilled Steak",
-      description: "USDA Prime tenderloin medallion, flame-grilled and finished with pure butter, served with rich velvety garden-rosemary tarragon cream sauce and rustic garlic mash.",
+      description:
+        "USDA Prime tenderloin medallion, flame-grilled and finished with pure butter, served with rich velvety garden-rosemary tarragon cream sauce and rustic garlic mash.",
       price: 1650,
       categorySlug: "steaks",
-      image: "https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=800&q=80",
+      image:
+        "https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=800&q=80",
       isFeatured: true,
-      tags: ["Luxury Choice", "Prime Beef"]
+      tags: ["Luxury Choice", "Prime Beef"],
     },
     {
       id: "menu_4",
       name: "The East Junction Truffle Pizza",
-      description: "Ancient wood-fired sourdough hand-tossed crust, dynamic buffalo milk mozzarella pearls, roasted baby cherry tomatoes, finished with rich drizzle of white truffle oil.",
+      description:
+        "Ancient wood-fired sourdough hand-tossed crust, dynamic buffalo milk mozzarella pearls, roasted baby cherry tomatoes, finished with rich drizzle of white truffle oil.",
       price: 1450,
       categorySlug: "pizza",
-      image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=800&q=80",
+      image:
+        "https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=800&q=80",
       isFeatured: true,
-      tags: ["Stone-baked", "Truffle Oil"]
+      tags: ["Stone-baked", "Truffle Oil"],
     },
     {
       id: "menu_5",
       name: "Imperial Saffron Biryani",
-      description: "Aromatic kettle-cooked recipe using premium aged Basmati. Infused with natural saffron, rich spice bouquets, juicy hand-cut mutton cubes, and crispy gold onions.",
+      description:
+        "Aromatic kettle-cooked recipe using premium aged Basmati. Infused with natural saffron, rich spice bouquets, juicy hand-cut mutton cubes, and crispy gold onions.",
       price: 1250,
       categorySlug: "biryani",
-      image: "https://images.unsplash.com/photo-1633945274405-b6c8069047b0?auto=format&fit=crop&w=800&q=80",
+      image:
+        "https://images.unsplash.com/photo-1633945274405-b6c8069047b0?auto=format&fit=crop&w=800&q=80",
       isFeatured: true,
-      tags: ["Heritage", "Spicy"]
+      tags: ["Heritage", "Spicy"],
     },
     {
       id: "menu_6",
       name: "Chicken Mushroom Fettuccine",
-      description: "Fresh egg-fettuccine pasta spun in standard parmesan reduction, sliced oven-herbed chicken breast, and wild pan-fried cremini mushrooms.",
+      description:
+        "Fresh egg-fettuccine pasta spun in standard parmesan reduction, sliced oven-herbed chicken breast, and wild pan-fried cremini mushrooms.",
       price: 1150,
       categorySlug: "pasta",
-      image: "https://images.unsplash.com/photo-1645112411341-6c4fd023714a?auto=format&fit=crop&w=800&q=80",
+      image:
+        "https://images.unsplash.com/photo-1645112411341-6c4fd023714a?auto=format&fit=crop&w=800&q=80",
       isFeatured: true,
-      tags: ["Creamy", "Italian Style"]
+      tags: ["Creamy", "Italian Style"],
     },
     {
       id: "menu_7",
       name: "Szechuan Glazed Chilli Chicken",
-      description: "Double-cooked crispy organic chicken cubes tossed with charred Szechuan red chiles, scallion roots, honey reduction, and sesame dust.",
+      description:
+        "Double-cooked crispy organic chicken cubes tossed with charred Szechuan red chiles, scallion roots, honey reduction, and sesame dust.",
       price: 1250,
       categorySlug: "chinese",
-      image: "https://images.unsplash.com/photo-1525755662778-989d0524087e?auto=format&fit=crop&w=800&q=80",
+      image:
+        "https://images.unsplash.com/photo-1525755662778-989d0524087e?auto=format&fit=crop&w=800&q=80",
       isFeatured: false,
-      tags: ["Spicy Accent"]
+      tags: ["Spicy Accent"],
     },
     {
       id: "menu_8",
       name: "Beef Steak Burger",
-      description: "Thin-shaved tenderloin steak flash-saut\xE9ed with bell peppers and melted provolone cheese, served on a toasted sourdough roll with house steak-sauce glaze.",
+      description:
+        "Thin-shaved tenderloin steak flash-saut\xE9ed with bell peppers and melted provolone cheese, served on a toasted sourdough roll with house steak-sauce glaze.",
       price: 950,
       categorySlug: "burgers",
-      image: "https://images.unsplash.com/photo-1586190848861-99aa4a171e90?auto=format&fit=crop&w=800&q=80",
+      image:
+        "https://images.unsplash.com/photo-1586190848861-99aa4a171e90?auto=format&fit=crop&w=800&q=80",
       isFeatured: true,
-      tags: ["Gourmet Blend"]
+      tags: ["Gourmet Blend"],
     },
     {
       id: "menu_9",
       name: "Mint Lemonade Spritzer",
-      description: "Muddled cool mint sprigs and organic swirled lime wedges, raw wild blossom honey, fine gray rock salt, and ice-cold mountain carbonated spring water.",
+      description:
+        "Muddled cool mint sprigs and organic swirled lime wedges, raw wild blossom honey, fine gray rock salt, and ice-cold mountain carbonated spring water.",
       price: 350,
       categorySlug: "drinks",
-      image: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=800&q=80",
+      image:
+        "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=800&q=80",
       isFeatured: true,
-      tags: ["Refresher", "Ice Cold"]
+      tags: ["Refresher", "Ice Cold"],
     },
     {
       id: "menu_10",
       name: "24K Gold Saffron Kulfi",
-      description: "Traditional slow-reduced dense clotted-cream ice, infused with true grade-A saffron strings and green cardamom seeds, glazed with real edible golden foil shards.",
+      description:
+        "Traditional slow-reduced dense clotted-cream ice, infused with true grade-A saffron strings and green cardamom seeds, glazed with real edible golden foil shards.",
       price: 550,
       categorySlug: "desserts",
-      image: "https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=800&q=80",
+      image:
+        "https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=800&q=80",
       isFeatured: true,
-      tags: ["Gold Plated", "Signature Dessert"]
-    }
+      tags: ["Gold Plated", "Signature Dessert"],
+    },
   ];
   const defaultBirthdayEvents = [
     {
       id: "event_1",
       name: "Royal Platinum Celebration",
-      description: "Our signature luxury birthday program designed for VIP hosting, customized to offer the ultimate aesthetic impact with high-end luxury details.",
+      description:
+        "Our signature luxury birthday program designed for VIP hosting, customized to offer the ultimate aesthetic impact with high-end luxury details.",
       pricePerPerson: 4500,
-      image: "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&w=800&q=80",
+      image:
+        "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&w=800&q=80",
       inclusions: [
         "Exclusive access to the Private VIP Dining Lounge at Spogmai Plaza",
         "High-contrast fresh flower ceiling backdrops and premium gold archways",
         "Assorted 3-Tier Customized Fondant Celebration Cake",
         "Elite 4-course bespoke menu (Appetizer, Platters, Artisan Drinks, Saffron Desserts)",
         "Complimentary live table-side violinist for ambient sets",
-        "Dedicated VIP service coordinators and complimentary professional photography"
+        "Dedicated VIP service coordinators and complimentary professional photography",
       ],
-      popular: true
+      popular: true,
     },
     {
       id: "event_2",
       name: "Golden Jubilee Banquet",
-      description: "Beautiful celebratory layout ideal for warm, joyful, and luxury-filled family birthday gatherings and corporate celebrations.",
+      description:
+        "Beautiful celebratory layout ideal for warm, joyful, and luxury-filled family birthday gatherings and corporate celebrations.",
       pricePerPerson: 3e3,
-      image: "https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=800&q=80",
+      image:
+        "https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=800&q=80",
       inclusions: [
         "Reserved semi-private wing area beautifully styled with custom candlelight arrangements",
         "Dynamic 2-Tier Signature Red Velvet or Chocolate Fudge cake",
         "Crafted 3-course menu including Signature Burgers and Chinese Glazed Specialities",
         "Premium immersive surround audio player output customizable to user taste",
-        "Bespoke gold-foiled dynamic table name cards"
+        "Bespoke gold-foiled dynamic table name cards",
       ],
-      popular: false
+      popular: false,
     },
     {
       id: "event_3",
       name: "Elite Birthday High-Tea",
-      description: "Sophisticated social or professional afternoon birthday event focused on a lighter, highly chic presentation style.",
+      description:
+        "Sophisticated social or professional afternoon birthday event focused on a lighter, highly chic presentation style.",
       pricePerPerson: 1800,
-      image: "https://images.unsplash.com/photo-1543007630-9710e4a00a20?auto=format&fit=crop&w=800&q=80",
+      image:
+        "https://images.unsplash.com/photo-1543007630-9710e4a00a20?auto=format&fit=crop&w=800&q=80",
       inclusions: [
         "Luxury styled high-tea buffet station with gold server towers",
         "Bespoke mini gourmet burger sliders and assorted miniature woodfired flatbreads",
         "Free-flowing glass Mint Lemonade spritzers & specialty brewed French-press coffees",
-        "Elegantly themed table centerpiece bouquets and light background jazz"
+        "Elegantly themed table centerpiece bouquets and light background jazz",
       ],
-      popular: false
-    }
+      popular: false,
+    },
   ];
   const defaultReviews = [
     {
@@ -188,13 +213,16 @@ function initDB() {
       email: "ayesha.khan@peshawarcritics.com",
       role: "Peshawar Food Critic",
       rating: 5,
-      comment: "An absolute masterclass in luxury dining. The Tarragon Grilled Steak is perfectly tender and seasoned to gourmet standards. The glassmorphic golden interior makes you feel like you are in London or Dubai. Spogmai Plaza has truly found its jewel.",
-      message: "An absolute masterclass in luxury dining. The Tarragon Grilled Steak is perfectly tender and seasoned to gourmet standards. The glassmorphic golden interior makes you feel like you are in London or Dubai. Spogmai Plaza has truly found its jewel.",
+      comment:
+        "An absolute masterclass in luxury dining. The Tarragon Grilled Steak is perfectly tender and seasoned to gourmet standards. The glassmorphic golden interior makes you feel like you are in London or Dubai. Spogmai Plaza has truly found its jewel.",
+      message:
+        "An absolute masterclass in luxury dining. The Tarragon Grilled Steak is perfectly tender and seasoned to gourmet standards. The glassmorphic golden interior makes you feel like you are in London or Dubai. Spogmai Plaza has truly found its jewel.",
       date: "2026-06-12",
       createdAt: "2026-06-12T12:00:00.000Z",
-      image: "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80",
+      image:
+        "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80",
       isApproved: true,
-      status: "approved"
+      status: "approved",
     },
     {
       id: "rev_2",
@@ -202,13 +230,16 @@ function initDB() {
       email: "bilal.ahmed@gmail.com",
       role: "Regular Family Guest",
       rating: 5,
-      comment: "The East Junction is Peshawar's finest spot for family dinners. Outstanding service, secure family environment, and generous portion sizes. The Turkish Platter is exceptionally juicy and easily feeds our heavy table group. 10/10!",
-      message: "The East Junction is Peshawar's finest spot for family dinners. Outstanding service, secure family environment, and generous portion sizes. The Turkish Platter is exceptionally juicy and easily feeds our heavy table group. 10/10!",
+      comment:
+        "The East Junction is Peshawar's finest spot for family dinners. Outstanding service, secure family environment, and generous portion sizes. The Turkish Platter is exceptionally juicy and easily feeds our heavy table group. 10/10!",
+      message:
+        "The East Junction is Peshawar's finest spot for family dinners. Outstanding service, secure family environment, and generous portion sizes. The Turkish Platter is exceptionally juicy and easily feeds our heavy table group. 10/10!",
       date: "2026-06-15",
       createdAt: "2026-06-15T10:30:00.000Z",
-      image: "https://images.unsplash.com/photo-1502082553048-f009c37129b9?auto=format&fit=crop&w=800&q=80",
+      image:
+        "https://images.unsplash.com/photo-1502082553048-f009c37129b9?auto=format&fit=crop&w=800&q=80",
       isApproved: true,
-      status: "approved"
+      status: "approved",
     },
     {
       id: "rev_3",
@@ -216,52 +247,55 @@ function initDB() {
       email: "zubair.afridi@gmail.com",
       role: "Corporate Lead Guide",
       rating: 5,
-      comment: "Phenomenal layout for corporate gatherings! We booked the Royal Platinum Birthday setup for our director's surprise and the precision in flowers, food presentation, and live music blew everyone away. Customer service is fantastic.",
-      message: "Phenomenal layout for corporate gatherings! We booked the Royal Platinum Birthday setup for our director's surprise and the precision in flowers, food presentation, and live music blew everyone away. Customer service is fantastic.",
+      comment:
+        "Phenomenal layout for corporate gatherings! We booked the Royal Platinum Birthday setup for our director's surprise and the precision in flowers, food presentation, and live music blew everyone away. Customer service is fantastic.",
+      message:
+        "Phenomenal layout for corporate gatherings! We booked the Royal Platinum Birthday setup for our director's surprise and the precision in flowers, food presentation, and live music blew everyone away. Customer service is fantastic.",
       date: "2026-06-16",
       createdAt: "2026-06-16T15:24:00.000Z",
-      image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80",
+      image:
+        "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80",
       isApproved: true,
-      status: "approved"
-    }
+      status: "approved",
+    },
   ];
   const defaultGallery = [
     {
       id: "gal_1",
       url: "https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=800&q=80",
       title: "Luxury Dining Under Saffron Chandeliers",
-      category: "interior"
+      category: "interior",
     },
     {
       id: "gal_2",
       url: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=800&q=80",
       title: "The Sovereign Sizzling Turkish Platter",
-      category: "dishes"
+      category: "dishes",
     },
     {
       id: "gal_3",
       url: "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&w=800&q=80",
       title: "Platinum Birthday Suite Arrangement",
-      category: "events"
+      category: "events",
     },
     {
       id: "gal_4",
       url: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=800&q=80",
       title: "Barista Crafted Golden Honey Latte",
-      category: "drinks"
+      category: "drinks",
     },
     {
       id: "gal_5",
       url: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=800&q=80",
       title: "Our Signature Gourmet Dripping Cheese Burger",
-      category: "dishes"
+      category: "dishes",
     },
     {
       id: "gal_6",
       url: "https://images.unsplash.com/photo-1543007630-9710e4a00a20?auto=format&fit=crop&w=800&q=80",
       title: "Modern Ambient Coffee Lounge",
-      category: "interior"
-    }
+      category: "interior",
+    },
   ];
   const defaultReservations = [
     {
@@ -272,9 +306,10 @@ function initDB() {
       date: "2026-06-19",
       time: "20:30",
       guests: 6,
-      specialRequest: "Near the window for a family anniversary celebrate, request the violin player if available.",
+      specialRequest:
+        "Near the window for a family anniversary celebrate, request the violin player if available.",
       status: "confirmed",
-      createdAt: "2026-06-16T12:00:00.000Z"
+      createdAt: "2026-06-16T12:00:00.000Z",
     },
     {
       id: "res_2",
@@ -284,10 +319,11 @@ function initDB() {
       date: "2026-06-20",
       time: "19:00",
       guests: 15,
-      specialRequest: "Golden Jubilee Birthday package event booking. Expecting custom flower table layouts.",
+      specialRequest:
+        "Golden Jubilee Birthday package event booking. Expecting custom flower table layouts.",
       status: "pending",
-      createdAt: "2026-06-17T08:30:00.000Z"
-    }
+      createdAt: "2026-06-17T08:30:00.000Z",
+    },
   ];
   const defaultMessages = [
     {
@@ -296,10 +332,11 @@ function initDB() {
       email: "kamran.b@nexus.com.pk",
       phone: "0312-5551122",
       subject: "Corporate Catering Services Inquiries",
-      message: "Hello! We would like to inquire about hosting a corporate dinner for 40 executives next Tuesday evening. Do you offer set-menu catering customizations and can we project visual files in the lounge? Kindly call back on my number.",
+      message:
+        "Hello! We would like to inquire about hosting a corporate dinner for 40 executives next Tuesday evening. Do you offer set-menu catering customizations and can we project visual files in the lounge? Kindly call back on my number.",
       date: "2026-06-16",
-      isRead: false
-    }
+      isRead: false,
+    },
   ];
   const dbData = {
     categories: defaultCategories,
@@ -308,7 +345,7 @@ function initDB() {
     reviews: defaultReviews,
     gallery: defaultGallery,
     reservations: defaultReservations,
-    messages: defaultMessages
+    messages: defaultMessages,
   };
   fs.writeFileSync(DB_PATH, JSON.stringify(dbData, null, 2), "utf-8");
   return dbData;
@@ -320,22 +357,27 @@ function saveDB() {
 app.get("/api/settings", (req, res) => {
   res.json({
     restaurantName: "The East Junction",
-    location: "Spogmai Plaza, Near Avon Super Store, University Road, Peshawar, Pakistan",
+    location:
+      "Spogmai Plaza, Near Avon Super Store, University Road, Peshawar, Pakistan",
     phone: "091-5840011",
     email: "info@theeastjunction.com",
     whatsapp: "92915840011",
     // Raw for api linking
     instagramUser: "theeastjunction",
-    mapUrl: "https://maps.google.com/?q=Spogmai+Plaza+University+Road+Peshawar"
+    mapUrl: "https://maps.google.com/?q=Spogmai+Plaza+University+Road+Peshawar",
   });
 });
 app.post("/api/auth/login", (req, res) => {
   const { username, password } = req.body;
-  const isMatch = username === "Mati Ur Rehman" && password === "Sasuke Uchiha" || username?.trim() === "Mati Ur Rehman" && password === "Sasuke Uchiha";
+  const isMatch =
+    (username === "Mati Ur Rehman" && password === "Sasuke Uchiha") ||
+    (username?.trim() === "Mati Ur Rehman" && password === "Sasuke Uchiha");
   if (isMatch) {
     res.json({ success: true, token: "admin-junction-token-secured-091" });
   } else {
-    res.status(401).json({ success: false, message: "Invalid luxury admin credentials." });
+    res
+      .status(401)
+      .json({ success: false, message: "Invalid luxury admin credentials." });
   }
 });
 app.get("/api/categories", (req, res) => {
@@ -347,7 +389,7 @@ app.post("/api/categories", (req, res) => {
     id: "cat_" + Date.now(),
     name,
     slug: slug.toLowerCase(),
-    icon: icon || "Utensils"
+    icon: icon || "Utensils",
   };
   db.categories.push(newCat);
   saveDB();
@@ -363,16 +405,19 @@ app.get("/api/menu", (req, res) => {
   res.json(db.menuItems);
 });
 app.post("/api/menu", (req, res) => {
-  const { name, description, price, categorySlug, image, isFeatured, tags } = req.body;
+  const { name, description, price, categorySlug, image, isFeatured, tags } =
+    req.body;
   const newItem = {
     id: "menu_" + Date.now(),
     name,
     description,
     price: Number(price),
     categorySlug,
-    image: image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80",
+    image:
+      image ||
+      "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80",
     isFeatured: Boolean(isFeatured),
-    tags: tags || []
+    tags: tags || [],
   };
   db.menuItems.push(newItem);
   saveDB();
@@ -385,7 +430,7 @@ app.put("/api/menu/:id", (req, res) => {
     db.menuItems[index] = {
       ...db.menuItems[index],
       ...req.body,
-      price: Number(req.body.price ?? db.menuItems[index].price)
+      price: Number(req.body.price ?? db.menuItems[index].price),
     };
     saveDB();
     res.json(db.menuItems[index]);
@@ -403,15 +448,18 @@ app.get("/api/events", (req, res) => {
   res.json(db.birthdayEvents);
 });
 app.post("/api/events", (req, res) => {
-  const { name, description, pricePerPerson, exclusions, image, popular } = req.body;
+  const { name, description, pricePerPerson, exclusions, image, popular } =
+    req.body;
   const newEvent = {
     id: "event_" + Date.now(),
     name,
     description,
     pricePerPerson: Number(pricePerPerson),
-    image: image || "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&w=800&q=80",
+    image:
+      image ||
+      "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&w=800&q=80",
     inclusions: Array.isArray(exclusions) ? exclusions : [],
-    popular: Boolean(popular)
+    popular: Boolean(popular),
   };
   db.birthdayEvents.push(newEvent);
   saveDB();
@@ -429,7 +477,9 @@ app.get("/api/reservations", (req, res) => {
 app.post("/api/reservations", (req, res) => {
   const { name, email, phone, date, time, guests, specialRequest } = req.body;
   if (!name || !phone || !date || !time || !guests) {
-    return res.status(400).json({ error: "Required reservation files missing." });
+    return res
+      .status(400)
+      .json({ error: "Required reservation files missing." });
   }
   const newRes = {
     id: "res_" + Date.now(),
@@ -441,7 +491,7 @@ app.post("/api/reservations", (req, res) => {
     guests: Number(guests),
     specialRequest: specialRequest || "",
     status: "pending",
-    createdAt: (/* @__PURE__ */ new Date()).toISOString()
+    createdAt: /* @__PURE__ */ new Date().toISOString(),
   };
   db.reservations.unshift(newRes);
   saveDB();
@@ -472,7 +522,9 @@ app.post("/api/reviews", (req, res) => {
   const { name, email, rating, message, comment, image, role } = req.body;
   const finalComment = message || comment || "";
   const finalRole = role || "Valued Diner";
-  const finalCreatedDate = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+  const finalCreatedDate = /* @__PURE__ */ new Date()
+    .toISOString()
+    .split("T")[0];
   const newReview = {
     id: "rev_" + Date.now(),
     name: name || "Anonymous Guest",
@@ -483,13 +535,13 @@ app.post("/api/reviews", (req, res) => {
     // support existing comments
     role: finalRole,
     date: finalCreatedDate,
-    createdAt: (/* @__PURE__ */ new Date()).toISOString(),
+    createdAt: /* @__PURE__ */ new Date().toISOString(),
     // requested ISO format
     image: image || "",
     // optional base64 or URL structure
     isApproved: false,
     // moderation by default
-    status: "pending"
+    status: "pending",
     // moderation by default
   };
   db.reviews.unshift(newReview);
@@ -532,8 +584,8 @@ app.post("/api/messages", (req, res) => {
     phone,
     subject: subject || "General Inquiry",
     message,
-    date: (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
-    isRead: false
+    date: /* @__PURE__ */ new Date().toISOString().split("T")[0],
+    isRead: false,
   };
   db.messages.unshift(newMsg);
   saveDB();
@@ -563,9 +615,11 @@ app.post("/api/gallery", (req, res) => {
   const { url, title, category } = req.body;
   const newImg = {
     id: "gal_" + Date.now(),
-    url: url || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80",
+    url:
+      url ||
+      "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80",
     title: title || "Gourmet Snapshot",
-    category: category || "dishes"
+    category: category || "dishes",
   };
   db.gallery.push(newImg);
   saveDB();
@@ -580,7 +634,7 @@ app.delete("/api/gallery/:id", (req, res) => {
 app.get("/api/stats", (req, res) => {
   const reservationsCount = db.reservations.length;
   const pendingReservations = db.reservations.filter(
-    (r) => r.status === "pending"
+    (r) => r.status === "pending",
   ).length;
   const menuItemsCount = db.menuItems.length;
   const reviewsCount = db.reviews.length;
@@ -590,7 +644,7 @@ app.get("/api/stats", (req, res) => {
     pendingReservations,
     menuItemsCount,
     reviewsCount,
-    messagesCount
+    messagesCount,
   });
 });
 let aiClient = null;
@@ -599,16 +653,16 @@ function getAI() {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       console.warn(
-        "WARNING: GEMINI_API_KEY environment variable is not defined."
+        "WARNING: GEMINI_API_KEY environment variable is not defined.",
       );
     }
     aiClient = new GoogleGenAI({
       apiKey: apiKey || "MOCK_KEY",
       httpOptions: {
         headers: {
-          "User-Agent": "aistudio-build"
-        }
-      }
+          "User-Agent": "aistudio-build",
+        },
+      },
     });
   }
   return aiClient;
@@ -621,25 +675,51 @@ app.post("/api/chat", async (req, res) => {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     const lower = message.toLowerCase();
-    let text = "Welcome to The East Junction Peshawar! I am EastBot, your server-side assistant. It seems there is no API key configured in our Secrets yet, but I am happy to help! We are located at Spogmai Plaza, Near Avon Super Store, University Road, Peshawar and open 11:00 AM to 12:00 AM. Call us at 0915840011.";
-    if (lower.includes("reserve") || lower.includes("table") || lower.includes("booking") || lower.includes("book")) {
-      text = "Absolutely! I can assist you with your table reservation. Please share your Name, Phone Number, Date, Time, and Guest Count, and we will get your table ready at The East Junction Peshawar!";
-    } else if (lower.includes("location") || lower.includes("kahan") || lower.includes("address") || lower.includes("where")) {
-      text = "The East Junction Peshawar is located at Spogmai Plaza, Near Avon Super Store, University Road, Peshawar. Drive over or find us on Google Maps!";
-    } else if (lower.includes("menu") || lower.includes("khana") || lower.includes("dishes") || lower.includes("eat")) {
-      text = "We have wonderful dishes! Some of our most popular are the Turkish Platter (Rs. 1850), Signature Gourmet Burger (Rs. 850), Tarragon Grilled Steak (Rs. 1650), and Chicken Mushroom Pasta (Rs. 1150). Try our refreshing Mint Lemonade too!";
-    } else if (lower.includes("birthday") || lower.includes("event") || lower.includes("salgira")) {
-      text = "Yes! We specialize in premium Birthday event setups. Please share the Event Type, Date, Guest Count, and Decoration Requirements so we can organize it perfectly!";
+    let text =
+      "Welcome to The East Junction Peshawar! I am EastBot, your server-side assistant. It seems there is no API key configured in our Secrets yet, but I am happy to help! We are located at Spogmai Plaza, Near Avon Super Store, University Road, Peshawar and open 11:00 AM to 12:00 AM. Call us at 0915840011.";
+    if (
+      lower.includes("reserve") ||
+      lower.includes("table") ||
+      lower.includes("booking") ||
+      lower.includes("book")
+    ) {
+      text =
+        "Absolutely! I can assist you with your table reservation. Please share your Name, Phone Number, Date, Time, and Guest Count, and we will get your table ready at The East Junction Peshawar!";
+    } else if (
+      lower.includes("location") ||
+      lower.includes("kahan") ||
+      lower.includes("address") ||
+      lower.includes("where")
+    ) {
+      text =
+        "The East Junction Peshawar is located at Spogmai Plaza, Near Avon Super Store, University Road, Peshawar. Drive over or find us on Google Maps!";
+    } else if (
+      lower.includes("menu") ||
+      lower.includes("khana") ||
+      lower.includes("dishes") ||
+      lower.includes("eat")
+    ) {
+      text =
+        "We have wonderful dishes! Some of our most popular are the Turkish Platter (Rs. 1850), Signature Gourmet Burger (Rs. 850), Tarragon Grilled Steak (Rs. 1650), and Chicken Mushroom Pasta (Rs. 1150). Try our refreshing Mint Lemonade too!";
+    } else if (
+      lower.includes("birthday") ||
+      lower.includes("event") ||
+      lower.includes("salgira")
+    ) {
+      text =
+        "Yes! We specialize in premium Birthday event setups. Please share the Event Type, Date, Guest Count, and Decoration Requirements so we can organize it perfectly!";
     } else if (lower.includes("spicy") || lower.includes("spici")) {
-      text = "I highly recommend our Fried Rice with Beef Chilli or our Signature Gourmet Burger if you enjoy hot and spicy flavors!";
+      text =
+        "I highly recommend our Fried Rice with Beef Chilli or our Signature Gourmet Burger if you enjoy hot and spicy flavors!";
     }
     return res.json({ text });
   }
   try {
     const ai = getAI();
-    const currentMenuSummary = db.menuItems.map(
-      (item) => `- ${item.name}: Rs. ${item.price} (${item.description})`
-    ).slice(0, 15).join("\n");
+    const currentMenuSummary = db.menuItems
+      .map((item) => `- ${item.name}: Rs. ${item.price} (${item.description})`)
+      .slice(0, 15)
+      .join("\n");
     const systemInstruction = `You are EastBot, the official restaurant concierge and AI Assistant for "The East Junction Peshawar".
 Your personality is friendly, professional, fast, helpful, and restaurant-focused. Use short, crisp, clear responses (maximum 2-3 sentences where possible, 4 sentences absolute max).
 
@@ -705,19 +785,20 @@ Upselling Guidelines:
       for (const h of history) {
         contents.push({
           role: h.sender === "user" ? "user" : "model",
-          parts: [{ text: h.text }]
+          parts: [{ text: h.text }],
         });
       }
     }
     contents.push({
       role: "user",
-      parts: [{ text: message }]
+      parts: [{ text: message }],
     });
     const addReservationTool = {
       functionDeclarations: [
         {
           name: "addReservation",
-          description: "Creates a real table reservation at The East Junction. Call this once you have gathered: Name, Phone Number, Date, Time, and Number of Guests.",
+          description:
+            "Creates a real table reservation at The East Junction. Call this once you have gathered: Name, Phone Number, Date, Time, and Number of Guests.",
           parameters: {
             type: Type.OBJECT,
             properties: {
@@ -726,34 +807,35 @@ Upselling Guidelines:
               date: { type: Type.STRING, description: "YYYY-MM-DD format" },
               time: { type: Type.STRING, description: "HH:MM format" },
               guests: { type: Type.NUMBER },
-              specialRequest: { type: Type.STRING }
+              specialRequest: { type: Type.STRING },
             },
-            required: ["name", "phone", "date", "time", "guests"]
-          }
+            required: ["name", "phone", "date", "time", "guests"],
+          },
         },
         {
           name: "addContactMessage",
-          description: "Creates an inquiry, reservation event or birthday booking in the contact ledger.",
+          description:
+            "Creates an inquiry, reservation event or birthday booking in the contact ledger.",
           parameters: {
             type: Type.OBJECT,
             properties: {
               name: { type: Type.STRING },
               phone: { type: Type.STRING },
               subject: { type: Type.STRING },
-              message: { type: Type.STRING }
+              message: { type: Type.STRING },
             },
-            required: ["name", "phone", "subject", "message"]
-          }
-        }
-      ]
+            required: ["name", "phone", "subject", "message"],
+          },
+        },
+      ],
     };
     const response = await ai.models.generateContent({
       model: "gemini-3.5-flash",
       contents,
       config: {
         systemInstruction,
-        tools: [addReservationTool]
-      }
+        tools: [addReservationTool],
+      },
     });
     const functionCalls = response.functionCalls;
     if (functionCalls && functionCalls.length > 0) {
@@ -770,7 +852,7 @@ Upselling Guidelines:
           guests: Number(args.guests) || 2,
           specialRequest: args.specialRequest || "",
           status: "pending",
-          createdAt: (/* @__PURE__ */ new Date()).toISOString()
+          createdAt: /* @__PURE__ */ new Date().toISOString(),
         };
         db.reservations.unshift(newRes);
         saveDB();
@@ -786,20 +868,20 @@ Upselling Guidelines:
                   {
                     functionResponse: {
                       name: "addReservation",
-                      response: { success: true, reservation: newRes }
-                    }
-                  }
-                ]
-              }
+                      response: { success: true, reservation: newRes },
+                    },
+                  },
+                ],
+              },
             ],
             config: {
               systemInstruction,
-              tools: [addReservationTool]
-            }
+              tools: [addReservationTool],
+            },
           });
           return res.json({
             text: secondResponse.text,
-            reservationCreated: newRes
+            reservationCreated: newRes,
           });
         } catch {
           return res.json({
@@ -809,7 +891,7 @@ Upselling Guidelines:
 - Time: ${newRes.time}
 - Guests: ${newRes.guests}
 Hum jald hi aapse raabta krenge! Standard status pending hai.`,
-            reservationCreated: newRes
+            reservationCreated: newRes,
           });
         }
       }
@@ -822,8 +904,8 @@ Hum jald hi aapse raabta krenge! Standard status pending hai.`,
           phone: args.phone,
           subject: args.subject,
           message: args.message,
-          date: (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
-          isRead: false
+          date: /* @__PURE__ */ new Date().toISOString().split("T")[0],
+          isRead: false,
         };
         db.messages.unshift(newMsg);
         saveDB();
@@ -839,36 +921,36 @@ Hum jald hi aapse raabta krenge! Standard status pending hai.`,
                   {
                     functionResponse: {
                       name: "addContactMessage",
-                      response: { success: true, message: newMsg }
-                    }
-                  }
-                ]
-              }
+                      response: { success: true, message: newMsg },
+                    },
+                  },
+                ],
+              },
             ],
             config: {
               systemInstruction,
-              tools: [addReservationTool]
-            }
+              tools: [addReservationTool],
+            },
           });
           return res.json({
             text: secondResponse.text,
-            messageCreated: newMsg
+            messageCreated: newMsg,
           });
         } catch {
           return res.json({
             text: `Thank you! Your event booking or inquiry has been received. Our team will contact you back on ${newMsg.phone} shortly!`,
-            messageCreated: newMsg
+            messageCreated: newMsg,
           });
         }
       }
     }
     return res.json({
-      text: response.text
+      text: response.text,
     });
   } catch (error) {
     console.error("EXPRESS GEMINI ERROR:", error);
     return res.json({
-      text: "The East Junction service is slightly busy. Aap direct reservations tab use kr sakte hain ya call kr sakte hain! We are always ready to serve you."
+      text: "The East Junction service is slightly busy. Aap direct reservations tab use kr sakte hain ya call kr sakte hain! We are always ready to serve you.",
     });
   }
 });
@@ -876,7 +958,7 @@ async function startServer() {
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },
-      appType: "spa"
+      appType: "spa",
     });
     app.use(vite.middlewares);
     console.log("Vite dev middleware loaded successfully.");
