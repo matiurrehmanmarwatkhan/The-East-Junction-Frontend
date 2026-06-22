@@ -5,12 +5,14 @@ import {
   CalendarCheck
 } from "lucide-react";
 import { motion } from "motion/react";
+import api from "../api";
+
 export default function EventsView({ setView, setSelectedPackage }) {
   const [eventSuites, setEventSuites] = useState([]);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
-    fetch("/api/events").then((res) => res.json()).then((data) => {
-      setEventSuites(data);
+    api.get("/events").then((res) => {
+      setEventSuites(res.data);
     }).catch((err) => {
       console.error("Failed to load birthday event packages:", err);
     }).finally(() => {

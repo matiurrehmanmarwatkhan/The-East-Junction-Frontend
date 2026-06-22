@@ -19,6 +19,7 @@ import {
   Edit,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import api from "../api";
 export default function AdminDashboard({ loginAdmin, logoutAdmin, isAdmin }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -81,15 +82,43 @@ export default function AdminDashboard({ loginAdmin, logoutAdmin, isAdmin }) {
   const [refreshing, setRefreshing] = useState(false);
 
   // Authenticated fetch helper
-  const fetchWithAuth = (url, options = {}) => {
-    const token = localStorage.getItem("TEJ_ADMIN_TOKEN");
-    return fetch(url, {
-      ...options,
-      headers: {
-        ...options.headers,
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-    });
+  const fetchWithAuth = async (url, options = {}) => {
+    try {
+      const config = {
+        url,
+        method: options.method || "GET",
+        headers: options.headers || {},
+      };
+      
+      if (options.body) {
+        if (options.body instanceof FormData) {
+          config.data = options.body;
+        } else if (typeof options.body === "string") {
+          try {
+            config.data = JSON.parse(options.body);
+          } catch {
+            config.data = options.body;
+          }
+        } else {
+          config.data = options.body;
+        }
+      }
+      
+      const response = await api(config);
+      
+      return {
+        ok: response.status >= 200 && response.status < 300,
+        status: response.status,
+        json: async () => response.data,
+      };
+    } catch (err) {
+      console.error("fetchWithAuth error:", err);
+      return {
+        ok: false,
+        status: err.response?.status || 500,
+        json: async () => err.response?.data || { error: err.message },
+      };
+    }
   };
 
   const fetchAllAdminData = async () => {
@@ -98,14 +127,14 @@ export default function AdminDashboard({ loginAdmin, logoutAdmin, isAdmin }) {
     try {
       const [cats, items, resvs, revs, msgs, evts, statsInfo, galleryData] =
         await Promise.all([
-          fetchWithAuth("/api/categories").then((res) => res.json()),
-          fetchWithAuth("/api/menu").then((res) => res.json()),
-          fetchWithAuth("/api/reservations").then((res) => res.json()),
-          fetchWithAuth("/api/reviews").then((res) => res.json()),
-          fetchWithAuth("/api/messages").then((res) => res.json()),
-          fetchWithAuth("/api/events").then((res) => res.json()),
-          fetchWithAuth("/api/stats").then((res) => res.json()),
-          fetchWithAuth("/api/gallery").then((res) => res.json()),
+          fetchWithAuth("/categories").then((res) => res.json()),
+          fetchWithAuth("/menu").then((res) => res.json()),
+          fetchWithAuth("/reservations").then((res) => res.json()),
+          fetchWithAuth("/reviews").then((res) => res.json()),
+          fetchWithAuth("/messages").then((res) => res.json()),
+          fetchWithAuth("/events").then((res) => res.json()),
+          fetchWithAuth("/stats").then((res) => res.json()),
+          fetchWithAuth("/gallery").then((res) => res.json()),
         ]);
       setCategories(cats);
       setMenuItems(items);
@@ -128,12 +157,11 @@ export default function AdminDashboard({ loginAdmin, logoutAdmin, isAdmin }) {
     e.preventDefault();
     setLoginError("");
     try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
+      const response = await api.post("/auth/login", {
+        username,
+        password,
       });
-      const data = await response.json();
+      const data = response.data;
       if (data.success) {
         loginAdmin(data.token);
       } else {
@@ -166,7 +194,7 @@ export default function AdminDashboard({ loginAdmin, logoutAdmin, isAdmin }) {
         formData.append("image", menuForm.image);
       }
 
-      const url = editingMenu ? `/api/menu/${editingMenu}` : "/api/menu";
+      const url = editingMenu ? `/menu/${editingMenu}` : "/menu";
       const method = editingMenu ? "PUT" : "POST";
 
       const response = await fetchWithAuth(url, {
@@ -194,7 +222,7 @@ export default function AdminDashboard({ loginAdmin, logoutAdmin, isAdmin }) {
   const handleDeleteMenu = async (id) => {
     if (!confirm("Confirm excision of this gourmet asset?")) return;
     try {
-      await fetchWithAuth(`/api/menu/${id}`, { method: "DELETE" });
+      await api.delete(`/menu/${id}`);
       fetchAllAdminData();
     } catch (err) {
       console.error(err);
@@ -202,11 +230,7 @@ export default function AdminDashboard({ loginAdmin, logoutAdmin, isAdmin }) {
   };
   const handleToggleFeatured = async (item) => {
     try {
-      await fetchWithAuth(`/api/menu/${item.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isFeatured: !item.isFeatured }),
-      });
+      await api.put(`/menu/${item.id}`, { isFeatured: !item.isFeatured });
       fetchAllAdminData();
     } catch (err) {
       console.error(err);
@@ -216,12 +240,8 @@ export default function AdminDashboard({ loginAdmin, logoutAdmin, isAdmin }) {
     e.preventDefault();
     if (!categoryForm.name || !categoryForm.slug) return;
     try {
-      const response = await fetchWithAuth("/api/categories", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(categoryForm),
-      });
-      if (response.ok) {
+      const response = await api.post("/categories", categoryForm);
+      if (response.status === 200 || response.status === 201) {
         setCategoryForm({ name: "", slug: "", icon: "Grid" });
         fetchAllAdminData();
       }
@@ -233,7 +253,7 @@ export default function AdminDashboard({ loginAdmin, logoutAdmin, isAdmin }) {
     if (!confirm("Excising a category might leave dishes isolated. Proceed?"))
       return;
     try {
-      await fetchWithAuth(`/api/categories/${id}`, { method: "DELETE" });
+      await api.delete(`/categories/${id}`);
       fetchAllAdminData();
     } catch (err) {
       console.error(err);
@@ -241,11 +261,7 @@ export default function AdminDashboard({ loginAdmin, logoutAdmin, isAdmin }) {
   };
   const handleUpdateReservation = async (id, status) => {
     try {
-      await fetchWithAuth(`/api/reservations/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
-      });
+      await api.put(`/reservations/${id}`, { status });
       fetchAllAdminData();
     } catch (err) {
       console.error(err);
@@ -254,7 +270,7 @@ export default function AdminDashboard({ loginAdmin, logoutAdmin, isAdmin }) {
   const handleDeleteReservation = async (id) => {
     if (!confirm("Excise this booking slot forever?")) return;
     try {
-      await fetchWithAuth(`/api/reservations/${id}`, { method: "DELETE" });
+      await api.delete(`/reservations/${id}`);
       fetchAllAdminData();
     } catch (err) {
       console.error(err);
@@ -262,7 +278,7 @@ export default function AdminDashboard({ loginAdmin, logoutAdmin, isAdmin }) {
   };
   const handleApproveReview = async (id) => {
     try {
-      await fetchWithAuth(`/api/reviews/${id}`, {
+      await fetchWithAuth(`/reviews/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "approved" }),
@@ -274,7 +290,7 @@ export default function AdminDashboard({ loginAdmin, logoutAdmin, isAdmin }) {
   };
   const handleRejectReview = async (id) => {
     try {
-      await fetchWithAuth(`/api/reviews/${id}`, {
+      await fetchWithAuth(`/reviews/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "rejected" }),
@@ -286,7 +302,7 @@ export default function AdminDashboard({ loginAdmin, logoutAdmin, isAdmin }) {
   };
   const handleDeleteReview = async (id) => {
     try {
-      await fetchWithAuth(`/api/reviews/${id}`, { method: "DELETE" });
+      await api.delete(`/reviews/${id}`);
       fetchAllAdminData();
     } catch (err) {
       console.error(err);
@@ -294,7 +310,7 @@ export default function AdminDashboard({ loginAdmin, logoutAdmin, isAdmin }) {
   };
   const handleMarkMessageRead = async (id) => {
     try {
-      await fetchWithAuth(`/api/messages/${id}`, { method: "PUT" });
+      await api.put(`/messages/${id}`);
       fetchAllAdminData();
     } catch (err) {
       console.error(err);
@@ -302,7 +318,7 @@ export default function AdminDashboard({ loginAdmin, logoutAdmin, isAdmin }) {
   };
   const handleDeleteMessage = async (id) => {
     try {
-      await fetchWithAuth(`/api/messages/${id}`, { method: "DELETE" });
+      await api.delete(`/messages/${id}`);
       fetchAllAdminData();
     } catch (err) {
       console.error(err);
@@ -330,7 +346,7 @@ export default function AdminDashboard({ loginAdmin, logoutAdmin, isAdmin }) {
         formData.append("image", eventForm.image);
       }
 
-      const url = editingEvent ? `/api/events/${editingEvent}` : "/api/events";
+      const url = editingEvent ? `/events/${editingEvent}` : "/events";
       const method = editingEvent ? "PUT" : "POST";
 
       const response = await fetchWithAuth(url, {
@@ -357,7 +373,7 @@ export default function AdminDashboard({ loginAdmin, logoutAdmin, isAdmin }) {
   const handleDeleteEvent = async (id) => {
     if (!confirm("Abolish this birthday celebration suite structure?")) return;
     try {
-      await fetchWithAuth(`/api/events/${id}`, { method: "DELETE" });
+      await api.delete(`/events/${id}`);
       fetchAllAdminData();
     } catch (err) {
       console.error(err);
@@ -376,9 +392,7 @@ export default function AdminDashboard({ loginAdmin, logoutAdmin, isAdmin }) {
         formData.append("url", galleryForm.url);
       }
 
-      const url = editingGallery
-        ? `/api/gallery/${editingGallery}`
-        : "/api/gallery";
+      const url = editingGallery ? `/gallery/${editingGallery}` : "/gallery";
       const method = editingGallery ? "PUT" : "POST";
 
       const response = await fetchWithAuth(url, {
@@ -471,7 +485,7 @@ export default function AdminDashboard({ loginAdmin, logoutAdmin, isAdmin }) {
   const handleDeleteGallery = async (id) => {
     if (!confirm("Exterminate this gallery portrait record?")) return;
     try {
-      await fetchWithAuth(`/api/gallery/${id}`, { method: "DELETE" });
+      await api.delete(`/gallery/${id}`);
       fetchAllAdminData();
     } catch (err) {
       console.error(err);

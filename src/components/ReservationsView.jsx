@@ -10,6 +10,8 @@ import {
   PartyPopper
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import api from "../api";
+
 export default function ReservationsView({ selectedPackage, setSelectedPackage }) {
   const [formData, setFormData] = useState({
     name: "",
@@ -47,17 +49,13 @@ export default function ReservationsView({ selectedPackage, setSelectedPackage }
     e.preventDefault();
     if (!formData.name || !formData.phone || !formData.date || !formData.time) {
       setStatus("error");
-      setErrorMessage("Please fill in all mandatory indicators (Name, Phone, Date, and Time).");
+      setErrorMessage("Please fill in all mandatory indicators (Name, Phone, and Date, and Time).");
       return;
     }
     setStatus("booking");
     try {
-      const response = await fetch("/api/reservations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData)
-      });
-      if (response.ok) {
+      const response = await api.post("/reservations", formData);
+      if (response.status === 200 || response.status === 201) {
         const uniqueId = `TEJ-RSV-${Math.floor(1e3 + Math.random() * 9e3)}`;
         setVoucherId(uniqueId);
         setStatus("completed");
@@ -67,7 +65,7 @@ export default function ReservationsView({ selectedPackage, setSelectedPackage }
       }
     } catch (err) {
       setStatus("error");
-      setErrorMessage(err.message || "Could not link connection to reservation engine. Check network.");
+      setErrorMessage(err.response?.data?.message || err.message || "Could not link connection to reservation engine. Check network.");
     }
   };
   const timeSlots = [

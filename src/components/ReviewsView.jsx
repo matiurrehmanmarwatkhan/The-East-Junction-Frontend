@@ -14,6 +14,8 @@ import {
   Image as ImageIcon
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import api from "../api";
+
 const PRESET_DISH_IMAGES = [
   { name: "Turkish Platter", url: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=400&q=80" },
   { name: "Prime Burger", url: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=400&q=80" },
@@ -40,8 +42,8 @@ export default function ReviewsView() {
   const fileInputRef = useRef(null);
   const loadReviewsData = () => {
     setLoading(true);
-    fetch("/api/reviews").then((res) => res.json()).then((data) => {
-      setReviews(data);
+    api.get("/reviews").then((res) => {
+      setReviews(res.data);
     }).catch((err) => {
       console.error("Failed to load reviews:", err);
     }).finally(() => {
@@ -106,19 +108,15 @@ export default function ReviewsView() {
     setSubmitting(true);
     const finalImage = uploadedBase64Image || selectedPresetImage || "";
     try {
-      const response = await fetch("/api/reviews", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          email,
-          rating,
-          message,
-          image: finalImage,
-          role: "Valued Diner"
-        })
+      const response = await api.post("/reviews", {
+        name,
+        email,
+        rating,
+        message,
+        image: finalImage,
+        role: "Valued Diner"
       });
-      if (response.ok) {
+      if (response.status === 200 || response.status === 201) {
         setSubmittedSuccess(true);
         setName("");
         setEmail("");
@@ -134,7 +132,7 @@ export default function ReviewsView() {
         setFormError("We encountered a server glitch registering your review. Try again.");
       }
     } catch (err) {
-      setFormError("Failed to dispatch review to the server.");
+      setFormError(err.response?.data?.message || "Failed to dispatch review to the server.");
     } finally {
       setSubmitting(false);
     }

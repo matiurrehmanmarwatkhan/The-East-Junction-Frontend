@@ -7,14 +7,16 @@ import {
   Image as ImageIcon
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import api from "../api";
+
 export default function GalleryView() {
   const [galleryItems, setGalleryItems] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [lightboxIndex, setLightboxIndex] = useState(null);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
-    fetch("/api/gallery").then((res) => res.json()).then((data) => {
-      setGalleryItems(data);
+    api.get("/gallery").then((res) => {
+      setGalleryItems(res.data);
     }).catch((err) => {
       console.error("Failed to load gallery assets:", err);
     }).finally(() => {

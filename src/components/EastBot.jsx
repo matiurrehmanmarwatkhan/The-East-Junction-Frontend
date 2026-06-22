@@ -12,6 +12,8 @@ import {
   MessageCircle
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import api from "../api";
+
 export default function EastBot() {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
@@ -63,20 +65,11 @@ export default function EastBot() {
         sender: m.sender,
         text: m.text
       }));
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          message: trimmed,
-          history: historyPayload
-        })
+      const res = await api.post("/chat", {
+        message: trimmed,
+        history: historyPayload
       });
-      if (!res.ok) {
-        throw new Error("Failed to communicate with EastBot backend");
-      }
-      const data = await res.json();
+      const data = res.data;
       const botMsg = {
         id: "bot_" + Date.now(),
         sender: "bot",

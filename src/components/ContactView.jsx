@@ -8,6 +8,8 @@ import {
   AlertCircle
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import api from "../api";
+
 export default function ContactView() {
   const [formData, setFormData] = useState({
     name: "",
@@ -33,12 +35,8 @@ export default function ContactView() {
     }
     setStatus("submitting");
     try {
-      const response = await fetch("/api/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData)
-      });
-      if (response.ok) {
+      const response = await api.post("/messages", formData);
+      if (response.status === 200 || response.status === 201) {
         setStatus("success");
         setFormData({ name: "", email: "", phone: "", subject: "", message: "" });
       } else {
@@ -46,7 +44,7 @@ export default function ContactView() {
       }
     } catch (err) {
       setStatus("error");
-      setErrorMessage(err.message || "An unexpected error occurred. Please try again.");
+      setErrorMessage(err.response?.data?.message || err.message || "An unexpected error occurred. Please try again.");
     }
   };
   return <section id="contact-coordinates" className="bg-stone-950 min-h-screen pt-32 pb-24 text-stone-300">
