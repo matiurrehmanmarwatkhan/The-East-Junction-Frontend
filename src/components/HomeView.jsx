@@ -7,6 +7,8 @@ import {
   ArrowRight
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import api from "../api";
+
 export default function HomeView({ setView }) {
   const [featuredDishes, setFeaturedDishes] = useState([]);
   const [reviews, setReviews] = useState([]);
@@ -15,9 +17,9 @@ export default function HomeView({ setView }) {
   const [loading, setLoading] = useState(true);
   useEffect(() => {
     Promise.all([
-      fetch("/api/menu").then((res) => res.json()),
-      fetch("/api/reviews").then((res) => res.json()),
-      fetch("/api/events").then((res) => res.json())
+      api.get("/menu").then((res) => res.data),
+      api.get("/reviews").then((res) => res.data),
+      api.get("/events").then((res) => res.data)
     ]).then(([menuData, reviewData, eventData]) => {
       setFeaturedDishes(
         menuData.filter((item) => item.isFeatured).slice(0, 4)
